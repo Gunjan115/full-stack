@@ -1,0 +1,78 @@
+// ...existing code...
+import React, { useState } from "react";
+
+export default function App() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess(null);
+    setError(null);
+
+    try {
+      const resp = await fetch("/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body }),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`${resp.status} ${resp.statusText} ${text}`);
+      }
+
+      const data = await resp.json();
+      setSuccess(`Post created (id: ${data.id ?? "unknown"})`);
+      setTitle("");
+      setBody("");
+    } catch (err) {
+      setError("Failed to create post: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ maxWidth: 600, margin: "1rem auto", fontFamily: "sans-serif" }}>
+      <h2>Create Post</h2>
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: "block", marginBottom: 4 }}>Title</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            style={{ width: "100%", padding: 8 }}
+            disabled={loading}
+          />
+        </div>
+
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: "block", marginBottom: 4 }}>Body</label>
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            required
+            rows={6}
+            style={{ width: "100%", padding: 8 }}
+            disabled={loading}
+          />
+        </div>
+
+        <button type="submit" disabled={loading} style={{ padding: "8px 12px" }}>
+          {loading ? "Sending..." : "Send Post"}
+        </button>
+      </form>
+
+      {success && <div style={{ marginTop: 12, color: "green" }}>{success}</div>}
+      {error && <div style={{ marginTop: 12, color: "red" }}>{error}</div>}
+    </div>
+  );
+}
+// ...existing code...
